@@ -1,0 +1,23 @@
+{
+  "client": {
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "phone": "",
+    "address": "",
+    "city": "",
+    "state": "",
+    "zip": "",
+    "dob": "MM/DD/YYYY",
+    "ssn_last4": ""
+  },
+  "documents": {
+    "id_front": "~/Desktop/client_docs/id_front.jpg",
+    "id_back": "~/Desktop/client_docs/id_back.jpg",
+    "ssn_front": "~/Desktop/client_docs/ssn_front.jpg",
+    "ssn_back": "~/Desktop/client_docs/ssn_back.jpg",
+    "proof_of_address": "~/Desktop/client_docs/poa.pdf",
+    "breach_proof": "~/Desktop/client_docs/equifax_breach.png",
+    "ftc_report": "~/Desktop/client_docs/ftc_report.pdf"
+  }
+}

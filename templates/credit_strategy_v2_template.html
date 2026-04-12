@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credit Repair Strategy - {{ client.full_name }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @page { margin: 0.7in 0.5in 0.7in 0.5in; size: letter; }
+
+  /* Credify page header/footer — fixed on screen, repeated on print */
+  .credify-header, .credify-footer {
+    position: fixed;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1.5rem;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .credify-header {
+    top: 0;
+    height: 2.2rem;
+    background: #060810;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .credify-footer {
+    bottom: 0;
+    height: 2.2rem;
+    background: #060810;
+    border-top: 1px solid rgba(255,255,255,0.04);
+  }
+  .credify-brand {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(88,166,255,0.7);
+  }
+  .credify-label {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(230,237,243,0.3);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { overflow-x: hidden; }
+
+  body {
+    background: #060810;
+    font-family: 'Inter', system-ui, sans-serif;
+    margin: 0;
+    color: #e6edf3;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ================================================ */
+  /* Tailwind utility replacements                    */
+  /* ================================================ */
+
+  /* Layout */
+  .flex { display: flex; }
+  .grid { display: grid; }
+  .block { display: block; }
+  .inline-block { display: inline-block; }
+  .hidden { display: none; }
+  .relative { position: relative; }
+  .absolute { position: absolute; }
+  .z-10 { z-index: 10; }
+  .min-h-screen { min-height: 100vh; }
+  .w-full { width: 100%; }
+  .max-w-xl { max-width: 36rem; }
+  .max-w-2xl { max-width: 42rem; }
+  .max-w-lg { max-width: 32rem; }
+  .mx-auto { margin-left: auto; margin-right: auto; }
+
+  /* Flexbox */
+  .flex-col { flex-direction: column; }
+  .flex-row { flex-direction: row; }
+  .flex-wrap { flex-wrap: wrap; }
+  .items-center { align-items: center; }
+  .items-start { align-items: flex-start; }
+  .justify-center { justify-content: center; }
+  .justify-between { justify-content: space-between; }
+  .shrink-0 { flex-shrink: 0; }
+
+  /* Grid */
+  .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+  .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  /* Spacing */
+  .gap-2 { gap: 0.5rem; }
+  .gap-2\.5 { gap: 0.625rem; }
+  .gap-3 { gap: 0.75rem; }
+  .gap-4 { gap: 1rem; }
+  .gap-5 { gap: 1.25rem; }
+  .gap-6 { gap: 1.5rem; }
+  .gap-8 { gap: 2rem; }
+  .gap-x-6 { column-gap: 1.5rem; }
+  .gap-x-8 { column-gap: 2rem; }
+  .gap-y-2 { row-gap: 0.5rem; }
+  .gap-y-3 { row-gap: 0.75rem; }
+
+  .p-4 { padding: 1rem; }
+  .p-5 { padding: 1.25rem; }
+  .p-6 { padding: 1.5rem; }
+  .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+  .px-4 { padding-left: 1rem; padding-right: 1rem; }
+  .px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+  .px-10 { padding-left: 2.5rem; padding-right: 2.5rem; }
+  .px-12 { padding-left: 3rem; padding-right: 3rem; }
+  .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+  .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+  .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+  .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+  .py-5 { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+  .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+  .py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+  .py-16 { padding-top: 4rem; padding-bottom: 4rem; }
+  .pt-6 { padding-top: 1.5rem; }
+  .pt-8 { padding-top: 2rem; }
+  .pb-3 { padding-bottom: 0.75rem; }
+  .pb-8 { padding-bottom: 2rem; }
+  .pb-12 { padding-bottom: 3rem; }
+
+  .m-0 { margin: 0; }
+  .mb-1 { margin-bottom: 0.25rem; }
+  .mb-2 { margin-bottom: 0.5rem; }
+  .mb-3 { margin-bottom: 0.75rem; }
+  .mb-4 { margin-bottom: 1rem; }
+  .mb-5 { margin-bottom: 1.25rem; }
+  .mb-6 { margin-bottom: 1.5rem; }
+  .mb-8 { margin-bottom: 2rem; }
+  .mb-10 { margin-bottom: 2.5rem; }
+  .mt-1 { margin-top: 0.25rem; }
+  .mt-0\.5 { margin-top: 0.125rem; }
+  .mt-2 { margin-top: 0.5rem; }
+  .mt-3 { margin-top: 0.75rem; }
+  .mt-4 { margin-top: 1rem; }
+  .mt-5 { margin-top: 1.25rem; }
+  .mt-6 { margin-top: 1.5rem; }
+  .mt-12 { margin-top: 3rem; }
+  .mr-1 { margin-right: 0.25rem; }
+  .ml-1 { margin-left: 0.25rem; }
+
+  /* Space-y utilities */
+  .space-y-2\.5 > * + * { margin-top: 0.625rem; }
+  .space-y-3 > * + * { margin-top: 0.75rem; }
+  .space-y-4 > * + * { margin-top: 1rem; }
+
+  /* Typography */
+  .text-center { text-align: center; }
+  .text-left { text-align: left; }
+  .text-right { text-align: right; }
+
+  /* Center all headings, subheadings, section labels, and intro paragraphs */
+  h2, h3 { text-align: center; }
+  .card > p.text-\[11px\] { text-align: center; }
+  .card > p.text-\[15px\] { text-align: center; margin-left: auto; margin-right: auto; max-width: 36rem; }
+  .font-bold { font-weight: 700; }
+  .font-extrabold { font-weight: 800; }
+  .font-semibold { font-weight: 600; }
+  .font-medium { font-weight: 500; }
+  .text-xs { font-size: 0.75rem; line-height: 1rem; }
+  .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+  .text-base { font-size: 1rem; line-height: 1.5rem; }
+  .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+  .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+  .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+  .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+  .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+  .text-5xl { font-size: 3rem; line-height: 1; }
+  .leading-none { line-height: 1; }
+  .leading-tight { line-height: 1.25; }
+  .leading-relaxed { line-height: 1.625; }
+  .uppercase { text-transform: uppercase; }
+  .line-through { text-decoration: line-through; }
+  .no-underline { text-decoration: none; }
+
+  /* Font family */
+  .font-display { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+
+  /* Tracking / letter-spacing */
+  .tracking-wide { letter-spacing: 0.025em; }
+  .tracking-wider { letter-spacing: 0.05em; }
+  .tracking-widest { letter-spacing: 0.1em; }
+
+  /* Arbitrary text sizes */
+  .text-\[11px\] { font-size: 11px; }
+  .text-\[12px\] { font-size: 12px; }
+  .text-\[13px\] { font-size: 13px; }
+  .text-\[14px\] { font-size: 14px; }
+  .text-\[15px\] { font-size: 15px; }
+  .text-\[36px\] { font-size: 36px; }
+  .text-\[42px\] { font-size: 42px; }
+  .text-\[52px\] { font-size: 52px; }
+  .text-\[72px\] { font-size: 72px; }
+  .text-\[96px\] { font-size: 96px; }
+
+  /* Arbitrary tracking */
+  .tracking-\[2px\] { letter-spacing: 2px; }
+
+  /* Colors */
+  .text-white { color: #ffffff; }
+  .text-primary { color: #e6edf3; }
+  .text-secondary { color: #8b949e; }
+  .text-muted { color: #484f58; }
+  .text-accent-blue { color: #58a6ff; }
+  .text-accent-green { color: #3fb950; }
+  .text-accent-red { color: #f85149; }
+  .text-accent-amber { color: #d29922; }
+  .text-\[\#0d1117\] { color: #0d1117; }
+
+  .bg-body { background-color: #060810; }
+  .bg-accent-green { background-color: #3fb950; }
+
+  /* Borders */
+  .border-t { border-top-width: 1px; border-top-style: solid; }
+  .border-b { border-bottom-width: 1px; border-bottom-style: solid; }
+  .border-l-\[3px\] { border-left: 3px solid; }
+  .border-t-\[2px\] { border-top: 2px solid; }
+  .rounded-xl { border-radius: 0.75rem; }
+  .rounded-2xl { border-radius: 1rem; }
+  .rounded-full { border-radius: 9999px; }
+  .rounded-lg { border-radius: 0.5rem; }
+  .rounded-md { border-radius: 0.375rem; }
+
+  /* Border colors */
+  .border-white\/5 { border-color: rgba(255,255,255,0.05); }
+  .border-white\/10 { border-color: rgba(255,255,255,0.1); }
+  .border-accent-green { border-color: #3fb950; }
+  .border-accent-red { border-color: #f85149; }
+  .border-accent-blue { border-color: #58a6ff; }
+  .border-l-accent-red { border-left-color: #f85149; }
+
+  /* Sizing */
+  .h-\[2px\] { height: 2px; }
+  .w-2 { width: 0.5rem; }
+  .h-2 { height: 0.5rem; }
+  .min-h-\[48px\] { min-height: 48px; }
+  .min-w-\[150px\] { min-width: 150px; }
+  .max-w-\[900px\] { max-width: 900px; }
+  .max-w-\[600px\] { max-width: 600px; }
+
+  /* White-space */
+  .whitespace-nowrap { white-space: nowrap; }
+
+  /* Transform */
+  .rotate-90 { transform: rotate(90deg); }
+  .-translate-x-1\/2 { transform: translateX(-50%); }
+  .left-1\/2 { left: 50%; }
+
+  /* Negative position */
+  .-top-2\.5 { top: -0.625rem; }
+  .left-4 { left: 1rem; }
+
+  /* Effects */
+  .opacity-50 { opacity: 0.5; }
+  .cursor-pointer { cursor: pointer; }
+  .overflow-hidden { overflow: hidden; }
+
+  /* Transition */
+  .transition-all { transition: all 0.15s ease; }
+  .duration-200 { transition-duration: 200ms; }
+
+  /* Hover */
+  .hover\:brightness-110:hover { filter: brightness(1.1); }
+
+  /* Responsive md: prefix (min-width: 768px) */
+  @media (min-width: 768px) {
+    .md\:flex-row { flex-direction: row; }
+    .md\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .md\:text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+    .md\:text-6xl { font-size: 3.75rem; line-height: 1; }
+    .md\:text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+    .md\:text-\[52px\] { font-size: 52px; }
+    .md\:text-\[96px\] { font-size: 96px; }
+    .md\:px-12 { padding-left: 3rem; padding-right: 3rem; }
+    .md\:p-10 { padding: 2.5rem; }
+    .md\:w-auto { width: auto; }
+    .md\:gap-4 { gap: 1rem; }
+    .md\:rotate-0 { transform: rotate(0deg); }
+    .md\:border-l-0 { border-left: 0; }
+    .md\:border-t-\[3px\] { border-top: 3px solid; }
+  }
+
+  @media (min-width: 1024px) {
+    .lg\:text-7xl { font-size: 4.5rem; line-height: 1; }
+  }
+
+  /* ================================================ */
+  /* Custom component styles (original)               */
+  /* ================================================ */
+
+  /* Card glass treatment */
+  .card {
+    background: linear-gradient(145deg, rgba(15,18,28,0.95), rgba(8,10,16,0.98));
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.04) inset,
+      0 24px 48px -12px rgba(0,0,0,0.5);
+    border-radius: 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @media (hover: hover) {
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.1);
+      box-shadow:
+        0 1px 0 0 rgba(255,255,255,0.06) inset,
+        0 32px 64px -16px rgba(0,0,0,0.6);
+    }
+  }
+
+  .inner-card {
+    background: linear-gradient(145deg, rgba(12,15,24,0.9), rgba(8,10,16,0.95));
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.03) inset,
+      0 8px 24px -4px rgba(0,0,0,0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @media (hover: hover) {
+    .inner-card:hover {
+      border-color: rgba(255,255,255,0.08);
+      transform: translateY(-2px);
+      box-shadow:
+        0 1px 0 0 rgba(255,255,255,0.05) inset,
+        0 16px 32px -8px rgba(0,0,0,0.5);
+    }
+  }
+
+  /* Tradeline pick glow */
+  .pick-card {
+    background: linear-gradient(145deg, rgba(12,15,24,0.9), rgba(8,10,16,0.95));
+    border: 2px solid #3fb950;
+    box-shadow:
+      0 1px 0 0 rgba(255,255,255,0.03) inset,
+      0 8px 24px -4px rgba(0,0,0,0.4),
+      0 0 40px -10px rgba(63,185,80,0.15);
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .pick-card::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 300px;
+    height: 300px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(63,185,80,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  @media (hover: hover) {
+    .pick-card:hover {
+      border-color: #3fb950;
+      box-shadow:
+        0 1px 0 0 rgba(255,255,255,0.05) inset,
+        0 16px 48px -8px rgba(63,185,80,0.2);
+      transform: translateY(-2px);
+    }
+  }
+
+  /* Scroll animations -- content visible by default for no-JS contexts */
+  .reveal {
+    transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .reveal.js-hidden {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-scale {
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal-scale.js-hidden {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  .reveal-scale.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .stagger > * {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .stagger.js-hidden > * {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  .stagger.visible > *:nth-child(1) { transition-delay: 0s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(2) { transition-delay: 0.05s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(3) { transition-delay: 0.05s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(4) { transition-delay: 0.15s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(5) { transition-delay: 0.2s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(6) { transition-delay: 0.25s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(7) { transition-delay: 0.3s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(8) { transition-delay: 0.35s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(9) { transition-delay: 0.4s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(10) { transition-delay: 0.45s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(11) { transition-delay: 0.5s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(12) { transition-delay: 0.55s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(13) { transition-delay: 0.6s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(14) { transition-delay: 0.65s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(15) { transition-delay: 0.7s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(16) { transition-delay: 0.75s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(17) { transition-delay: 0.8s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(18) { transition-delay: 0.85s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(19) { transition-delay: 0.9s; opacity: 1; transform: translateY(0); }
+  .stagger.visible > *:nth-child(20) { transition-delay: 0.95s; opacity: 1; transform: translateY(0); }
+
+  /* Table styling */
+  table { border-collapse: collapse; }
+  thead th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #484f58;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  tbody td {
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: #8b949e;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background 0.15s ease; }
+  tbody tr:hover { background: rgba(88,166,255,0.04); }
+
+  /* Badge */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    transition: filter 0.15s ease;
+  }
+  .badge:hover { filter: brightness(1.2); }
+  .badge-red { background: rgba(248,81,73,0.12); color: #f85149; }
+  .badge-amber { background: rgba(210,153,34,0.12); color: #d29922; }
+  .badge-green { background: rgba(63,185,80,0.12); color: #3fb950; }
+  .badge-blue { background: rgba(88,166,255,0.12); color: #58a6ff; }
+  .badge-purple { background: rgba(188,140,255,0.12); color: #bc8cff; }
+
+  /* Table scroll mask for mobile */
+  .table-mask {
+    position: relative;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-mask::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(90deg, transparent, rgba(8,10,16,0.95));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  /* Group divider inside table */
+  .group-label td {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding-top: 18px !important;
+    padding-bottom: 8px !important;
+    border-bottom: none !important;
+    font-weight: 700;
+  }
+
+  /* Account accordion */
+  .acct-accordion { list-style: none; padding: 0; margin: 0; }
+  .acct-accordion li { margin-bottom: 6px; }
+  .acct-accordion details { background: rgba(15,18,28,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; transition: border-color 0.2s, background 0.2s; }
+  .acct-accordion details[open] { border-color: rgba(63,185,80,0.2); background: rgba(15,18,28,0.8); }
+  .acct-accordion summary { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; padding: 12px 16px; cursor: pointer; list-style: none; }
+  .acct-accordion summary::-webkit-details-marker { display: none; }
+  .acct-accordion summary::marker { display: none; content: ''; }
+  .acct-accordion .acct-name { font-weight: 600; color: var(--text-primary, #e6edf3); font-size: 14px; }
+  .acct-accordion .acct-meta { font-size: 12px; color: var(--text-secondary, #8b949e); grid-column: 1; }
+  .acct-accordion .acct-chevron { grid-column: 2; grid-row: 1; justify-self: end; display: inline-flex; align-items: center; gap: 8px; }
+  .acct-accordion .acct-chevron::after { content: '\25BC'; font-size: 9px; color: rgba(255,255,255,0.3); transition: transform 0.2s; }
+  .acct-accordion details[open] .acct-chevron::after { transform: rotate(180deg); color: #3fb950; }
+  .acct-detail { padding: 0 16px 14px; }
+  .acct-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
+  .acct-detail-item { display: flex; flex-direction: column; gap: 1px; }
+  .acct-detail-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.35); }
+  .acct-detail-value { font-size: 13px; color: var(--text-primary, #e6edf3); font-weight: 500; }
+  .acct-detail-divider { grid-column: 1 / -1; height: 1px; background: rgba(255,255,255,0.05); margin: 4px 0; }
+
+  /* Projected score glow */
+  .score-glow {
+    position: relative;
+  }
+  .score-glow::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 280px;
+    height: 280px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(63,185,80,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* CTA pulse */
+  @keyframes ctaPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(63, 185, 80, 0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(63, 185, 80, 0); }
+  }
+  .cta-btn {
+    animation: ctaPulse 2.5s ease-in-out infinite;
+  }
+
+  /* Hero glow */
+  .hero-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 500px;
+    height: 500px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(88,166,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Strikethrough */
+  .strike {
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
+
+  /* Flow arrow */
+  .flow-arrow {
+    color: #484f58;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  /* Mobile overrides */
+  /* -- Mobile (< 768px) -- */
+  @media (max-width: 768px) {
+    body { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .hero-glow { width: 300px; height: 300px; }
+    .score-glow::before { width: 180px; height: 180px; }
+    .pick-card::before { width: 180px; height: 180px; }
+    .card { border-radius: 16px; padding: 20px 16px; }
+    .inner-card { padding: 14px 12px; }
+    /* Shared mobile card base */
+    .table-negative, .table-keepers { overflow-x: visible; }
+    .table-negative::after, .table-keepers::after { display: none; }
+    .table-negative table, .table-keepers table { min-width: 0; display: block; }
+    .table-negative thead, .table-keepers thead { display: none; }
+    .table-negative tbody, .table-keepers tbody { display: block; }
+
+    /* 17-accounts: card layout (Account + Balance top, Reason below) */
+    .table-negative tr.group-label { display: block; }
+    .table-negative tr.group-label td { display: block; padding: 14px 0 6px 0; border: none; }
+    .table-negative tbody tr:not(.group-label) {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2px 8px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      background: rgba(15,18,28,0.6);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+    }
+    .table-negative tbody tr:not(.group-label) td { padding: 0; border: none; }
+    .table-negative tbody tr:not(.group-label) td:nth-child(1) { grid-column: 1; grid-row: 1; }
+    .table-negative tbody tr:not(.group-label) td:nth-child(3) { grid-column: 2; grid-row: 1; text-align: right; }
+    .table-negative tbody tr:not(.group-label) td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; font-size: 12px; margin-top: 2px; }
+
+    /* Accordion mobile adjustments */
+    .acct-accordion summary { padding: 10px 12px; }
+    .acct-detail { padding: 0 12px 12px; }
+    .acct-detail-grid { grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+    .reveal.js-hidden { transform: translateY(20px); }
+    .stagger.js-hidden > * { transform: translateY(15px); }
+    .pick-card { padding: 20px 16px; border-radius: 16px; }
+    .pick-card::before { width: 150px; height: 150px; }
+    /* Hero adjustments */
+    section.min-h-screen { min-height: 85vh; padding-top: 48px; padding-bottom: 48px; }
+    /* Score numbers */
+    .text-\[42px\] { font-size: 36px !important; }
+    /* Stat grid on small screens */
+    .grid-cols-2 { gap: 8px; }
+    /* Flow arrows */
+    .flow-arrow { font-size: 16px; }
+    /* Before/after grid */
+    .before-after { gap: 8px; }
+  }
+
+  /* -- Small phones (< 480px) -- */
+  @media (max-width: 480px) {
+    body { font-size: 14px; }
+    .card { padding: 16px 12px; border-radius: 14px; }
+    section.min-h-screen { min-height: 80vh; }
+    h1 { font-size: 32px !important; }
+    h2 { font-size: 22px !important; }
+    .text-\[42px\], .text-\[36px\] { font-size: 30px !important; }
+    .text-\[14px\] { font-size: 12px !important; }
+    .pick-card { padding: 16px 12px; }
+    .inner-card { padding: 12px 10px; }
+    .cta-btn { font-size: 16px; padding: 14px 24px; }
+  }
+
+  /* -- Desktop (> 1100px) -- */
+  @media (min-width: 1100px) {
+    .card { padding: 36px 44px; }
+    .inner-card { padding: 22px; }
+    .pick-card { padding: 28px; }
+    h2 { font-size: 32px; }
+    .grid.md\:grid-cols-3 { gap: 20px; }
+    .grid.md\:grid-cols-4 { gap: 16px; }
+    table { font-size: 15px; }
+    table th, table td { padding: 12px 16px; }
+    .acct-detail-grid { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  /* -- Wide desktop (> 1400px) -- */
+  @media (min-width: 1400px) {
+    .max-w-\[900px\] { max-width: 1040px !important; }
+    .card { padding: 40px 52px; margin-bottom: 28px; }
+    h1 { font-size: 80px !important; }
+    h2 { font-size: 36px; }
+    .text-\[42px\] { font-size: 56px !important; }
+    .text-lg.md\:text-xl { font-size: 22px; }
+  }
+
+  /* iMessage / no-JS / restricted preview fallback */
+  /* When JS is unavailable, ensure all content is visible and interactive elements readable */
+  details[open] summary ~ * { display: block; }
+  details summary { cursor: pointer; }
+  /* Force accordion items open in restricted environments via noscript below */
+
+  /* Print */
+  @media print {
+    body { background: white !important; color: #1a1a1a !important; }
+    .reveal, .reveal-scale, .stagger > * {
+      opacity: 1 !important; transform: none !important;
+    }
+    .card, .inner-card, .pick-card {
+      box-shadow: none !important;
+      border: 1px solid #ddd !important;
+    }
+    .hero-glow, .score-glow::before, .pick-card::before { display: none !important; }
+    .cta-btn { animation: none !important; }
+    .credify-header, .credify-footer {
+      position: fixed;
+      background: none !important;
+    }
+    .credify-brand { color: #2563eb !important; }
+    .credify-label { color: #999 !important; }
+  }
+</style>
+
+<body class="bg-body text-primary min-h-screen">
+
+<!-- Credify branding — fixed header/footer on every page -->
+<div class="credify-header">
+  <span class="credify-brand">CREDIFY</span>
+  <span class="credify-label">Credit Repair Strategy</span>
+</div>
+<div class="credify-footer">
+  <span class="credify-brand">CREDIFY</span>
+  <span class="credify-label">Credit Repair Strategy</span>
+</div>
+
+<!-- ACT 1 - Hero -->
+<section class="min-h-screen flex items-center justify-center px-4 py-16 md:px-12 relative reveal">
+  <div class="hero-glow"></div>
+  <div class="max-w-[900px] w-full text-center relative z-10">
+    <p class="text-[11px] font-semibold uppercase tracking-[2px] text-secondary mb-6">Confidential Credit Strategy</p>
+    <h1 class="font-display font-extrabold text-white text-4xl md:text-6xl lg:text-7xl leading-tight mb-5">{{ client.full_name }}</h1>
+    <p class="text-lg md:text-xl text-secondary max-w-xl mx-auto mb-10">Your path from {{ score_current_low }} to {{ score_optimistic }}+</p>
+    <div class="flex flex-wrap justify-center gap-x-8 gap-y-3 text-[14px] uppercase tracking-wide text-muted font-semibold">
+      <span>Bureaus: <span class="text-secondary">{{ bureaus_display }}</span></span>
+      <span>Score Model: <span class="text-secondary">{{ score_model }}</span></span>
+      <span>Prepared: <span class="text-secondary">{{ prepared_date }}</span></span>
+    </div>
+    <div class="mt-12 h-[2px] rounded-full mx-auto max-w-lg" style="background: linear-gradient(90deg, #58a6ff, #3fb950, transparent);"></div>
+  </div>
+</section>
+
+<!-- ACT 2 - Where You Stand -->
+<section class="px-4 md:px-12 pb-8 max-w-[900px] mx-auto">
+  <div class="card p-6 md:p-10 reveal">
+    <p class="text-[11px] font-bold uppercase tracking-[2px] text-accent-blue mb-3">Current Status</p>
+    <h2 class="font-display font-extrabold text-white text-2xl md:text-3xl mb-3">Where You Stand Today</h2>
+    <p class="text-secondary text-[15px] leading-relaxed mb-8 max-w-2xl mx-auto text-center">Your credit report tells a story &mdash; but it's not the whole story. Here's what the bureaus see right now, and why your score doesn't reflect who you are.</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 stagger">
+      {% for s in scores %}
+      <div class="inner-card rounded-2xl p-5 text-center">
+        <p class="text-[11px] uppercase tracking-widest text-muted font-semibold mb-1">{{ s.bureau }}</p>
+        <p class="{% if s.value == 'N/A' %}text-[36px] md:text-[42px]{% else %}text-[42px] md:text-[52px]{% endif %} font-extrabold leading-none text-{{ s.color }}">{{ s.value }}</p>
+        <p class="text-[12px] font-semibold uppercase tracking-wide text-{{ s.color }} mt-1">{{ s.tier }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 stagger">
+      <div class="inner-card rounded-xl p-4 text-center"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">Negative Accounts</p><p class="text-2xl font-bold text-{{ stats.negative_accounts_color }} mt-1">{{ stats.negative_accounts }}</p></div>
+      <div class="inner-card rounded-xl p-4 text-center"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">Total Debt</p><p class="text-2xl font-bold text-{{ stats.total_debt_color }} mt-1">{{ stats.total_debt_display }}</p></div>
+      <div class="inner-card rounded-xl p-4 text-center"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">Utilization</p><p class="text-2xl font-bold text-{{ stats.utilization_color }} mt-1">{{ stats.utilization }}</p></div>
+      <div class="inner-card rounded-xl p-4 text-center"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">Avg Account Age</p><p class="text-2xl font-bold text-{{ stats.age_color }} mt-1">{{ stats.avg_account_age }}</p></div>
+    </div>
+    {% if score_drop %}
+    <div class="mt-4 inner-card rounded-xl px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4 border border-red-500/30">
+      <div class="text-center sm:text-left">
+        <p class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-1">Score Before Collection</p>
+        <p class="text-3xl font-extrabold text-accent-green">{{ score_prior }}</p>
+        <p class="text-[11px] text-muted mt-0.5">Prior to LVNV insertion</p>
+      </div>
+      <div class="flex flex-col items-center">
+        <p class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-1">Impact</p>
+        <p class="text-3xl font-extrabold text-accent-red">&minus;{{ score_drop }} pts</p>
+        <p class="text-[11px] text-accent-red mt-0.5 font-semibold">1 collection account</p>
+      </div>
+      <div class="text-center sm:text-right">
+        <p class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-1">Score After Collection</p>
+        <p class="text-3xl font-extrabold text-accent-red">{{ score_current_low }}</p>
+        <p class="text-[11px] text-muted mt-0.5">Current Experian</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ACT 3 - What's Dragging You Down -->
+<section class="px-4 md:px-12 pb-8 max-w-[900px] mx-auto">
+  <div class="card p-6 md:p-10 reveal">
+    <p class="text-[11px] font-bold uppercase tracking-[2px] text-accent-red mb-3">The Problem</p>
+    <h2 class="font-display font-extrabold text-white text-2xl md:text-3xl mb-3">{{ negative_count }} Accounts Working Against You</h2>
+    <p class="text-secondary text-[15px] leading-relaxed mb-8 max-w-2xl mx-auto text-center">Every account below is costing you points. Collections, charge-offs, late payments &mdash; each one is dragging your score down. We're removing all of them.</p>
+    <div class="table-mask table-negative rounded-xl">
+      <table class="w-full text-sm stagger">
+        <thead><tr><th class="text-left px-3 py-2.5">Account</th><th class="text-left px-3 py-2.5">Reason</th><th class="text-right px-3 py-2.5">Balance</th></tr></thead>
+        <tbody>
+        {% for group in negative_groups %}
+          <tr class="group-label"><td colspan="3" class="px-3 text-accent-red">{{ group.label }}</td></tr>
+          {% for acct in group.accounts %}
+          <tr>
+            <td class="px-3 py-2.5"><span class="strike text-secondary">{{ acct.name }}</span></td>
+            <td class="px-3 py-2.5">{% for b in acct.badges %}<span class="badge badge-{{ b.color }}">{{ b.label }}</span> {% endfor %}{{ acct.reason }}</td>
+            <td class="px-3 py-2.5 text-right font-semibold text-primary">{{ acct.balance }}</td>
+          </tr>
+          {% endfor %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-6 inner-card rounded-xl p-5 flex items-center justify-between border-l-[3px] border-l-accent-red reveal">
+      <span class="text-secondary text-sm font-medium">Total debt being eliminated</span>
+      <span class="text-accent-red text-2xl font-extrabold">{{ total_negative_debt }}</span>
+    </div>
+  </div>
+</section>
+
+<!-- ACT 4 - The Strategy -->
+<section class="px-4 md:px-12 pb-8 max-w-[900px] mx-auto">
+  <div class="card p-6 md:p-10 reveal">
+    <p class="text-[11px] font-bold uppercase tracking-[2px] text-accent-blue mb-3">The Strategy</p>
+    <h2 class="font-display font-extrabold text-white text-2xl md:text-3xl mb-3">A Simple, Decisive Plan</h2>
+    <p class="text-secondary text-[15px] leading-relaxed mb-10 max-w-2xl mx-auto text-center">We strip away everything hurting you, keep everything helping you, and build a profile that opens doors.</p>
+    <div class="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 stagger">
+    {% for step in plan_steps %}
+      {% if not loop.first %}<div class="flow-arrow rotate-90 md:rotate-0">&#10132;</div>{% endif %}
+      <div class="inner-card rounded-xl {% if loop.last %}px-6 py-5{% else %}px-5 py-4{% endif %} text-center min-w-[150px] w-full md:w-auto border-l-[3px] md:border-l-0 md:border-t-[3px] border-{{ step.color }}"{% if loop.last %} style="border-width: 2px;"{% endif %}>
+        <p class="text-[11px] text-{{ step.color }} font-bold uppercase tracking-widest">{{ step.label }}</p>
+        <p class="text-primary font-semibold text-sm mt-1">{{ step.text }}</p>
+      </div>
+    {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ACT 5 - What You're Keeping -->
+<section class="px-4 md:px-12 pb-8 max-w-[900px] mx-auto">
+  <div class="card p-6 md:p-10 reveal">
+    <p class="text-[11px] font-bold uppercase tracking-[2px] text-accent-blue mb-3">Your Foundation</p>
+    <h2 class="font-display font-extrabold text-white text-2xl md:text-3xl mb-3">{{ keeper_accounts|length }} Accounts With Perfect History</h2>
+    <p class="text-secondary text-[15px] leading-relaxed mb-8 max-w-2xl mx-auto text-center">These accounts are your foundation. Every one has a clean payment record &mdash; they stay, and they work for you.</p>
+    <ul class="acct-accordion stagger">
+    {% for acct in keeper_accounts %}
+      <li>
+        <details>
+          <summary>
+            <span class="acct-name">{{ acct.name }}{% if acct.responsibility == 'Authorized User' %} <span class="badge badge-blue">AU</span>{% endif %}</span>
+            <span class="acct-chevron"><span class="badge badge-{{ acct.age_color }}">{{ acct.age }}</span></span>
+            <span class="acct-meta">{{ acct.type }} &middot; {{ acct.open_closed }}</span>
+          </summary>
+          <div class="acct-detail">
+            <div class="acct-detail-grid">
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Account Type</span>
+                <span class="acct-detail-value">{{ acct.account_type_detail }}</span>
+              </div>
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Responsibility</span>
+                <span class="acct-detail-value">{{ acct.responsibility }}</span>
+              </div>
+              <div class="acct-detail-divider"></div>
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Date Opened</span>
+                <span class="acct-detail-value">{{ acct.date_opened }}</span>
+              </div>
+              {% if acct.date_closed %}
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Date Closed</span>
+                <span class="acct-detail-value">{{ acct.date_closed }}</span>
+              </div>
+              {% endif %}
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Last Activity</span>
+                <span class="acct-detail-value">{{ acct.last_activity }}</span>
+              </div>
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Last Reported</span>
+                <span class="acct-detail-value">{{ acct.last_reported }}</span>
+              </div>
+              <div class="acct-detail-divider"></div>
+              {% if acct.amount_value and acct.amount_value != '—' %}
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">{{ acct.amount_label }}</span>
+                <span class="acct-detail-value">{{ acct.amount_value }}</span>
+              </div>
+              {% endif %}
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Balance</span>
+                <span class="acct-detail-value">{{ acct.balance }}</span>
+              </div>
+              {% if acct.monthly_payment and acct.monthly_payment != '—' %}
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Monthly Payment</span>
+                <span class="acct-detail-value">{{ acct.monthly_payment }}</span>
+              </div>
+              {% endif %}
+              <div class="acct-detail-divider"></div>
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Payment Status</span>
+                <span class="acct-detail-value" style="color:#3fb950;">{{ acct.payment_status }}</span>
+              </div>
+              <div class="acct-detail-item">
+                <span class="acct-detail-label">Bureaus Reporting</span>
+                <span class="acct-detail-value">{{ acct.bureaus }}</span>
+              </div>
+            </div>
+          </div>
+        </details>
+      </li>
+    {% endfor %}
+    </ul>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 stagger">
+      <div class="inner-card rounded-xl p-4 text-center"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">Remaining Accounts</p><p class="text-2xl font-bold text-accent-green mt-1">{{ post_cleanup.remaining_accounts }}</p></div>
+      <div class="inner-card rounded-xl p-4 text-center"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">Available Credit</p><p class="text-2xl font-bold text-primary mt-1">{{ post_cleanup.available_credit }}</p></div>
+      <div class="inner-card rounded-xl p-4 text-center"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">Payment History</p><p class="text-2xl font-bold text-accent-green mt-1">{{ post_cleanup.payment_history }}</p></div>
+      <div class="inner-card rounded-xl p-4 text-center"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">Negative Marks</p><p class="text-2xl font-bold text-accent-green mt-1">{{ post_cleanup.negative_marks }}</p></div>
+    </div>
+  </div>
+</section>
+
+{% if tradelines %}
+<!-- ACT 6 - Tradelines -->
+<section class="px-4 md:px-12 pb-8 max-w-[900px] mx-auto">
+  <div class="card p-6 md:p-10 reveal">
+    <p class="text-[11px] font-bold uppercase tracking-[2px] text-accent-green mb-3">The Accelerator</p>
+    <h2 class="font-display font-extrabold text-white text-2xl md:text-3xl mb-3">Two Tradelines That Change Everything</h2>
+    <p class="text-secondary text-[15px] leading-relaxed mb-10 max-w-2xl mx-auto text-center">You won't use these cards. You won't owe a dime. But their age, their limits, and their perfect history become part of YOUR profile &mdash; instantly.</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8 stagger">
+    {% for tl in tradelines %}
+      <div class="pick-card rounded-2xl p-6 relative z-10 reveal-scale text-center">
+        <span class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-accent-green text-[#0d1117] text-[11px] font-bold uppercase tracking-wide px-3 py-0.5 rounded-md whitespace-nowrap">Recommended Tradeline</span>
+        <div class="mt-3"><h3 class="text-primary font-bold text-lg">{{ tl.display_name }}</h3><p class="text-muted text-xs mt-0.5">{{ tl.issuer_description }}</p></div>
+        <p class="text-accent-green text-3xl font-extrabold mt-4">{{ tl.credit_limit }}</p>
+        <p class="text-muted text-[11px] uppercase tracking-wide font-semibold mt-0.5">Credit Limit</p>
+        <div class="grid grid-cols-2 gap-3 mt-5">
+          <div><p class="text-muted text-[11px] uppercase tracking-wide font-semibold">Account Age</p><p class="text-primary font-bold text-sm">{{ tl.account_age }}</p></div>
+          <div><p class="text-muted text-[11px] uppercase tracking-wide font-semibold">Opened</p><p class="text-primary font-bold text-sm">{{ tl.opened_year }}</p></div>
+          <div><p class="text-muted text-[11px] uppercase tracking-wide font-semibold">Payment History</p><p class="text-accent-green font-bold text-sm">{{ tl.payment_history }}</p></div>
+          <div><p class="text-muted text-[11px] uppercase tracking-wide font-semibold">Price</p><p class="text-accent-green font-extrabold text-lg">{{ tl.price }}</p></div>
+        </div>
+      </div>
+    {% endfor %}
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 stagger">
+      <div class="inner-card rounded-xl p-4 text-center border-t-[2px] border-accent-green"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">New Total Credit Limit</p><p class="text-2xl font-bold text-accent-green mt-1">{{ projected.total_credit_limit }}</p></div>
+      <div class="inner-card rounded-xl p-4 text-center border-t-[2px] border-accent-green"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">New Average Account Age</p><p class="text-2xl font-bold text-accent-green mt-1">{{ projected.avg_account_age }}</p></div>
+      <div class="inner-card rounded-xl p-4 text-center border-t-[2px] border-accent-green"><p class="text-[11px] uppercase tracking-wide text-muted font-semibold">New Utilization</p><p class="text-2xl font-bold text-accent-green mt-1">{{ projected.utilization }}</p></div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ACT 7 - Transformation -->
+<section class="px-4 md:px-12 pb-8 max-w-[900px] mx-auto">
+  <div class="card p-6 md:p-10 reveal">
+    <p class="text-[11px] font-bold uppercase tracking-[2px] text-accent-green mb-3">Your Transformation</p>
+    <h2 class="font-display font-extrabold text-white text-2xl md:text-3xl mb-8">From {{ score_current_low }} to {{ score_optimistic }}+</h2>
+    <div class="flex justify-center mb-10 reveal-scale">
+      <div class="inner-card rounded-2xl px-12 py-10 text-center score-glow relative overflow-hidden">
+        <p class="text-[11px] uppercase tracking-widest text-muted font-semibold mb-2 relative z-10">Projected Score Range</p>
+        <p id="scoreCounter" class="text-[72px] md:text-[96px] font-extrabold leading-none text-accent-green relative z-10">{{ score_optimistic }}</p>
+        <p class="text-[15px] font-bold text-secondary mt-2 relative z-10">{{ score_conservative }} &ndash; {{ score_optimistic }}</p>
+        <p class="text-[13px] font-bold uppercase tracking-wide text-accent-green mt-1 relative z-10">{{ score_projected_tier }}</p>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10 stagger">
+    {% for c in comparisons %}
+      <div class="inner-card rounded-xl p-4 text-center">
+        <p class="text-[11px] uppercase tracking-wide text-muted font-semibold mb-2">{{ c.label }}</p>
+        <p class="text-accent-red text-lg font-bold opacity-50 line-through">{{ c.before }}</p>
+        <p class="text-accent-green text-2xl font-extrabold">{{ c.after }}</p>
+      </div>
+    {% endfor %}
+    </div>
+    <div class="mb-10 reveal">
+      <h3 class="font-display font-bold text-white text-lg mb-5 text-center">What Happens Next</h3>
+      <div class="space-y-4 max-w-xl mx-auto">
+      {% for t in timeline %}
+        <div class="flex gap-4 items-center">
+          <div class="inner-card rounded-lg py-2 text-[11px] font-bold text-{{ t.color }} uppercase tracking-wide shrink-0 text-center whitespace-nowrap" style="width: 120px;">{{ t.time_range }}</div>
+          <p class="text-secondary text-sm leading-relaxed"><span class="text-primary font-semibold">{{ t.title }}</span> {{ t.description }}</p>
+        </div>
+      {% endfor %}
+      </div>
+    </div>
+    <div class="border-t border-white/5 pt-8 reveal">
+      <h3 class="font-display font-bold text-white text-xl mb-6 text-center">Your Investment</h3>
+      <div class="inner-card rounded-xl p-6 mb-6">
+        <p class="text-[11px] font-bold uppercase tracking-[2px] text-accent-blue mb-4 text-center">What's Included</p>
+        <ul class="space-y-2.5 text-sm text-secondary max-w-lg mx-auto">
+        {% for item in included_items %}
+          <li class="flex items-start gap-2.5"><span class="text-accent-green mt-0.5 shrink-0">&#10003;</span><span>{{ item }}</span></li>
+        {% endfor %}
+        </ul>
+      </div>
+      <div class="inner-card rounded-xl p-5 mb-6">
+        <div class="space-y-3 text-sm">
+        {% for line in pricing.lines %}
+          <div class="flex justify-between items-center">
+            <span class="{{ 'text-accent-green font-semibold' if line.is_discount else 'text-secondary' }}">{{ line.description }}</span>
+            <span class="{{ 'text-accent-green font-bold' if line.is_discount else 'text-white font-semibold' }}">{{ line.amount }}</span>
+          </div>
+        {% endfor %}
+        {% if pricing.discount_note %}
+        <p class="text-muted text-[10px] mt-3 pt-3 border-t border-white/10">* {{ pricing.discount_note }} discount applied. Not combinable with other offers.</p>
+        {% endif %}
+        </div>
+      </div>
+      <div class="text-center mb-6">
+        <p class="text-muted text-[11px] uppercase tracking-widest font-semibold mb-1">Total Investment</p>
+        <p class="text-white text-5xl font-extrabold font-display">{{ pricing.total_display }}</p>
+        <p class="text-secondary text-sm mt-1">{{ pricing.subtitle }}</p>
+      </div>
+      <div class="text-center">
+        <button class="cta-btn bg-accent-green hover:brightness-110 text-[#0d1117] font-bold text-lg px-10 py-4 rounded-2xl w-full md:w-auto min-h-[48px] cursor-pointer transition-all duration-200">{{ cta_text }}</button>
+        <p class="text-muted text-sm mt-4">{{ cta_subtext }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="px-4 md:px-12 pb-12 max-w-[900px] mx-auto text-center">
+  <div class="border-t border-white/5 pt-6">
+    <p class="text-muted text-[11px] leading-relaxed">This document is for informational purposes only and does not constitute legal or financial advice.</p>
+    <p class="text-muted text-[11px] leading-relaxed mt-1">Score projections are estimates based on typical dispute outcomes. Actual results depend on bureau investigation outcomes, creditor responses, and other factors.</p>
+    <p class="text-muted text-[11px] mt-3">Prepared {{ prepared_date }} &middot; Confidential</p>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('.reveal, .reveal-scale, .stagger').forEach(function(el) { el.classList.add('js-hidden'); });
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) { entry.target.classList.remove('js-hidden'); entry.target.classList.add('visible'); }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('.reveal, .reveal-scale, .stagger').forEach(function(el) { observer.observe(el); });
+function animateCounter(el, target, suffix) {
+  var current = 0; var step = Math.ceil(target / 45);
+  var timer = setInterval(function() { current += step; if (current >= target) { current = target; clearInterval(timer); } el.textContent = current + suffix; }, 25);
+}
+var scoreEl = document.getElementById('scoreCounter');
+var scoreObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting && !entry.target.dataset.animated) { entry.target.dataset.animated = 'true'; entry.target.textContent = '0+'; animateCounter(entry.target, {{ score_optimistic }}, ''); }
+  });
+}, { threshold: 0.5 });
+if (scoreEl) { scoreObserver.observe(scoreEl); }
+</script>
+<noscript>
+<style>
+  /* iMessage / no-JS fallback: force all content visible, accordions open */
+  .reveal, .reveal-scale, .stagger, .stagger > * {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  details { display: block; }
+  details > summary { pointer-events: none; }
+  details > summary ~ * { display: block !important; }
+  /* Ensure score counter shows the number (JS animation won't run) */
+  #scoreCounter { opacity: 1 !important; }
+  /* CTA button pulse animation won't run — make it static */
+  .cta-btn { animation: none !important; }
+</style>
+</noscript>
+</body>
+</html>
