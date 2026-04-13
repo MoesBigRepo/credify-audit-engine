@@ -28,18 +28,22 @@ on run argv
 			delay 2
 
 			-- Step 2: OS-level file save dialog is now open.
-			-- Set the filename.
+			-- Set the filename via clipboard paste (prevents character dropping).
 			keystroke "a" using command down
 			delay 0.3
-			keystroke reportName
+			set the clipboard to reportName
+			delay 0.2
+			keystroke "v" using command down
 			delay 0.5
 
 			-- Step 3: Navigate to save directory using Cmd+Shift+G (Go to folder)
 			keystroke "g" using {command down, shift down}
-			delay 1.5
+			delay 2
 
-			-- Type the save directory path
-			keystroke saveDir
+			-- Paste the save directory path (clipboard avoids / and space issues)
+			set the clipboard to saveDir
+			delay 0.2
+			keystroke "v" using command down
 			delay 0.5
 
 			-- Press Enter to go to that folder
