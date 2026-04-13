@@ -112,7 +112,7 @@ STATEMENT = ("I AM A VICTIM OF THE EQUIFAX AND TRANSUNION DATA BREACHES AND AM R
              "THAT THESE FRAUDULENT ACCOUNTS BE DELETED FROM MY CREDIT REPORTS\n\n"
              "As per FCRA 605B I am demanding that these accounts be blocked and deleted in 4 days")
 
-MULLVAD_COUNTRIES = ["us", "gb", "de", "nl", "ch", "se", "jp", "ca", "au", "sg", "fr", "es", "it", "no"]
+MULLVAD_COUNTRIES = ["us"]  # US-only — avoids latency from overseas servers
 
 def _mullvad_ip():
     try:
@@ -121,15 +121,17 @@ def _mullvad_ip():
         return j.get("ip") if j.get("mullvad_exit_ip") else None
     except: return None
 
+US_CITIES = ["qas", "atl", "chi", "dal", "mia", "nyc", "lax", "sea", "sjc", "den", "hou", "phx", "uyk", "was"]
+
 def rotate_vpn():
-    """Rotate Mullvad VPN via CLI. Picks a random country and reconnects.
+    """Rotate Mullvad VPN via CLI. Picks a random US city and reconnects.
     Returns new exit IP on success, None on failure."""
-    print("[VPN] Rotating Mullvad to new country...", file=sys.stderr)
+    print("[VPN] Rotating Mullvad to new US city...", file=sys.stderr)
     old_ip = _mullvad_ip()
-    country = random.choice(MULLVAD_COUNTRIES)
-    print(f"[VPN] Target country: {country} (was on IP {old_ip})", file=sys.stderr)
+    city = random.choice(US_CITIES)
+    print(f"[VPN] Target: us-{city} (was on IP {old_ip})", file=sys.stderr)
     try:
-        subprocess.run(["mullvad", "relay", "set", "location", country], capture_output=True, timeout=10, check=False)
+        subprocess.run(["mullvad", "relay", "set", "location", "us", city], capture_output=True, timeout=10, check=False)
         subprocess.run(["mullvad", "reconnect"], capture_output=True, timeout=10, check=False)
     except Exception as e:
         print(f"[VPN] Mullvad CLI error: {e}", file=sys.stderr)
@@ -138,7 +140,7 @@ def rotate_vpn():
         time.sleep(2)
         ip = _mullvad_ip()
         if ip and ip != old_ip:
-            print(f"[VPN] New IP: {ip} (was {old_ip}) — {country.upper()}", file=sys.stderr)
+            print(f"[VPN] New IP: {ip} (was {old_ip}) — us-{city}", file=sys.stderr)
             return ip
     print("[VPN] Rotation failed — IP didn't change after 30s", file=sys.stderr)
     return None
@@ -207,7 +209,7 @@ with ThreadPoolExecutor(max_workers=1) as executor:
         page = ctx.new_page()
 
         # Hide Chromium from dock/taskbar but do NOT minimize (minimizing stalls Angular rendering on macOS)
-        try: subprocess.Popen(["osascript", "-e", 'tell application "System Events" to set visible of process "Chromium" to false'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try: subprocess.Popen(["osascript", "-e", 'tell application "System Events" to set visible of process "Google Chrome for Testing" to false'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except: pass
 
         # === OPTIMIZATION #1: Route interception — cache assets, block analytics ===
@@ -726,10 +728,10 @@ with ThreadPoolExecutor(max_workers=1) as executor:
             cdp.send("Browser.setWindowBounds", {"windowId": wid, "bounds": {"left": 100, "top": 100, "width": 1100, "height": 800}})
             cdp.detach()
         except: pass
-        try: subprocess.Popen(["osascript", "-e", 'tell application "System Events" to set visible of process "Chromium" to true'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try: subprocess.Popen(["osascript", "-e", 'tell application "System Events" to set visible of process "Google Chrome for Testing" to true'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except: pass
         page.wait_for_timeout(300)
-        try: subprocess.Popen(["osascript", "-e", 'tell application "Chromium" to activate'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try: subprocess.Popen(["osascript", "-e", 'tell application "Google Chrome for Testing" to activate'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except: pass
         page.set_viewport_size({"width": 1100, "height": 800})
         page.evaluate("window.scrollTo(0, 0)")
@@ -742,7 +744,7 @@ with ThreadPoolExecutor(max_workers=1) as executor:
         _batch_idx = os.environ.get("FTC_BATCH_INDEX", "1")
         _report_name = f"{CLIENT['first_name']} FTC {_batch_idx}"
         _pdf_filename = f"{_report_name}.pdf"
-        _staging_dir = Path("/tmp/ftc_staging")
+        _staging_dir = Path("/private/tmp/ftc_staging")
         _staging_dir.mkdir(exist_ok=True)
         _staging_path = _staging_dir / _pdf_filename
 
@@ -774,120 +776,76 @@ with ThreadPoolExecutor(max_workers=1) as executor:
         # ====================================================================
         # LAYER 2a — Trigger download (browser domain → print dialog)
         # ====================================================================
-        _download_triggered = False
+        # Layer 2: Playwright-native download capture (replaces AppleScript)
+        # accept_downloads=True on the context means Chromium auto-accepts.
+        # expect_download() captures the event; save_as() routes the file.
+        # ====================================================================
+        _file_verified = False
+        _routed = False
+
         try:
-            _dl_btn = page.query_selector("button:has-text('Download Report')")
-            if _dl_btn and _dl_btn.is_visible():
-                _dl_btn.click(timeout=5000)
-                _download_triggered = True
-                log("[SAVE] Download Report button clicked")
+            with page.expect_download(timeout=30000) as download_info:
+                _dl_btn = page.query_selector("button:has-text('Download Report')")
+                if _dl_btn and _dl_btn.is_visible():
+                    _dl_btn.click(timeout=5000)
+                    log("[SAVE] Download Report button clicked")
+                else:
+                    page.evaluate("""() => {
+                        for (const b of document.querySelectorAll('button')) {
+                            if (b.textContent.includes('Download Report')) { b.click(); return true; }
+                        }
+                        return false;
+                    }""")
+                    log("[SAVE] Download Report clicked (JS fallback)")
+
+            download = download_info.value
+            download.save_as(str(_staging_path))
+            _file_verified = _staging_path.exists() and _staging_path.stat().st_size > 1000
+            if _file_verified:
+                log(f"[SAVE] Downloaded to staging: {_staging_path.stat().st_size} bytes")
             else:
-                page.evaluate("""() => {
-                    for (const b of document.querySelectorAll('button')) {
-                        if (b.textContent.includes('Download Report')) { b.click(); return true; }
-                    }
-                    return false;
-                }""")
-                _download_triggered = True
-                log("[SAVE] Download Report clicked (JS fallback)")
+                log(f"[SAVE] Download completed but file missing or too small")
         except Exception as _e:
-            log(f"[SAVE] FAIL Layer 2a — download button click: {str(_e)[:80]}")
+            log(f"[SAVE] expect_download failed: {str(_e)[:120]}")
 
-        if not _download_triggered:
-            log("[SAVE] FAIL — could not trigger download. Skipping save.")
-        else:
-            # Wait for Chromium print dialog to render (it opens with "Save as PDF" pre-selected)
-            page.wait_for_timeout(4000)
-
-            # ================================================================
-            # LAYER 2b — Native save bridge (AppleScript handles OS dialog)
-            # ================================================================
-            # AppleScript saves to STAGING dir (local /tmp, not Google Drive)
-            # so file appearance is instant and deterministic.
-            _script = Path(__file__).parent / "ftc_save_report.applescript"
-            _bridge_success = False
-            _bridge_stdout = ""
-            _bridge_stderr = ""
-            log("[SAVE] Invoking AppleScript native save bridge...")
+            # Fallback: CDP Page.printToPDF (works in headed mode)
             try:
-                _result = subprocess.run(
-                    ["osascript", str(_script), _report_name, str(_staging_dir)],
-                    capture_output=True, text=True, timeout=60
-                )
-                _bridge_stdout = _result.stdout.strip()
-                _bridge_stderr = _result.stderr.strip()
-                _bridge_success = _result.returncode == 0
-                log(f"[SAVE] AppleScript returned (rc={_result.returncode})")
-            except subprocess.TimeoutExpired:
-                log("[SAVE] FAIL Layer 2b — AppleScript timed out (60s)")
-                _bridge_stderr = "timeout"
-            except Exception as _e:
-                log(f"[SAVE] FAIL Layer 2b — AppleScript error: {_e}")
-                _bridge_stderr = str(_e)
+                import base64 as _b64
+                _cdp = ctx.new_cdp_session(page)
+                _result = _cdp.send("Page.printToPDF", {"printBackground": True, "preferCSSPageSize": True})
+                _pdf_bytes = _b64.b64decode(_result["data"])
+                with open(str(_staging_path), "wb") as _f:
+                    _f.write(_pdf_bytes)
+                _cdp.detach()
+                _file_verified = _staging_path.exists() and _staging_path.stat().st_size > 1000
+                if _file_verified:
+                    log(f"[SAVE] CDP printToPDF fallback: {_staging_path.stat().st_size} bytes")
+                else:
+                    log("[SAVE] CDP fallback produced empty/small file")
+            except Exception as _e2:
+                log(f"[SAVE] CDP fallback also failed: {str(_e2)[:120]}")
 
-            # ================================================================
-            # LAYER 3a — File verification + stabilization
-            # ================================================================
-            _file_verified = False
-            if _bridge_success or _bridge_stderr == "":
-                # Poll for file existence in staging
-                for _poll in range(15):  # up to 15s
-                    time.sleep(1)
-                    if _staging_path.exists() and _staging_path.stat().st_size > 0:
-                        # Check size stabilization (2 consecutive reads same size)
-                        _size1 = _staging_path.stat().st_size
-                        time.sleep(1)
-                        if _staging_path.exists():
-                            _size2 = _staging_path.stat().st_size
-                            if _size2 == _size1 and _size2 > 1000:  # stable and > 1KB
-                                _file_verified = True
-                                log(f"[SAVE] File verified in staging: {_size2} bytes, stable")
-                                break
-                            else:
-                                log(f"[SAVE] File still writing: {_size1} -> {_size2}")
-
-                if not _file_verified:
-                    # Check if it landed directly in final dir (AppleScript may have
-                    # used the final path if staging path had issues)
-                    if os.path.exists(_final_path) and os.path.getsize(_final_path) > 1000:
-                        _file_verified = True
-                        log(f"[SAVE] File found directly in final dir: {os.path.getsize(_final_path)} bytes")
-
-                if not _file_verified:
-                    log("[SAVE] FAIL Layer 3a — file not found or unstable after 15s")
-                    log(f"[SAVE]   AppleScript stdout: {_bridge_stdout}")
-                    log(f"[SAVE]   AppleScript stderr: {_bridge_stderr[:200]}")
-
-            # ================================================================
-            # LAYER 3b — Route file from staging to final destination
-            # ================================================================
-            _routed = False
-            if _file_verified and _staging_path.exists():
-                try:
-                    import shutil as _shutil
-                    _shutil.move(str(_staging_path), _final_path)
-                    _routed = True
-                    log(f"[SAVE] Routed to final: {_final_path}")
-                except Exception as _e:
-                    log(f"[SAVE] FAIL Layer 3b — move failed: {_e}")
-                    # File is still in staging — not lost
-                    log(f"[SAVE] File preserved in staging: {_staging_path}")
-            elif _file_verified and os.path.exists(_final_path):
-                # Already in final dir (AppleScript saved directly there)
+        # ================================================================
+        # Layer 3: Route file from staging to final destination
+        # ================================================================
+        if _file_verified and _staging_path.exists():
+            try:
+                import shutil as _shutil
+                _shutil.move(str(_staging_path), _final_path)
                 _routed = True
-                log(f"[SAVE] Already in final dir (no move needed)")
+                log(f"[SAVE] Routed to final: {_final_path}")
+            except Exception as _e:
+                log(f"[SAVE] Route failed: {_e} — file preserved in staging: {_staging_path}")
 
-            # ================================================================
-            # LAYER 4 — Final status
-            # ================================================================
-            if _routed:
-                log(f"[SAVE] SUCCESS — {_final_path}")
-            elif _file_verified:
-                log(f"[SAVE] PARTIAL — file verified but routing failed. Check staging: {_staging_path}")
-            elif _bridge_success:
-                log(f"[SAVE] FAIL — AppleScript ran but no file detected")
-            else:
-                log(f"[SAVE] FAIL — AppleScript did not complete successfully")
+        # ================================================================
+        # Layer 4: Final status
+        # ================================================================
+        if _routed:
+            log(f"[SAVE] SUCCESS — {_final_path}")
+        elif _file_verified:
+            log(f"[SAVE] PARTIAL — downloaded but routing failed. Check: {_staging_path}")
+        else:
+            log("[SAVE] FAIL — could not capture download or generate PDF")
 
         # ====================================================================
         # Cleanup: delete audit JSON if it was a temp file, close browser
