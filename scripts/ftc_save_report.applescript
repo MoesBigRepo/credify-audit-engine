@@ -28,10 +28,11 @@ on run argv
 			delay 2
 
 			-- Step 2: OS-level file save dialog is now open.
-			-- Set the filename via clipboard paste (prevents character dropping).
+			-- Set the filename (with explicit .pdf extension — Chromium's
+			-- "Save as PDF" does NOT auto-append it, file saves without extension).
 			keystroke "a" using command down
 			delay 0.3
-			set the clipboard to reportName
+			set the clipboard to reportName & ".pdf"
 			delay 0.2
 			keystroke "v" using command down
 			delay 0.5

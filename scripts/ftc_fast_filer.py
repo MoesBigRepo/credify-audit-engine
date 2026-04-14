@@ -981,6 +981,14 @@ with ThreadPoolExecutor(max_workers=1) as executor:
                         _file_verified = True
                         log(f"[SAVE] File found directly in final dir: {os.path.getsize(_final_path)} bytes")
 
+                # Fallback: Chromium may have saved without .pdf extension
+                if not _file_verified:
+                    _extensionless = _staging_dir / _report_name
+                    if _extensionless.exists() and _extensionless.stat().st_size > 1000:
+                        _extensionless.rename(_staging_path)
+                        _file_verified = True
+                        log(f"[SAVE] Found extensionless file, renamed to .pdf: {_staging_path.stat().st_size} bytes")
+
                 if not _file_verified:
                     log("[SAVE] FAIL Layer 3a — file not found or unstable after 15s")
                     log(f"[SAVE]   AppleScript stdout: {_bridge_stdout}")
