@@ -9,7 +9,7 @@ SCRIPT_DIR = Path(__file__).parent
 sys.path.insert(0, str(SCRIPT_DIR))
 
 from parsers import detect_provider, validate_or_die
-from classify import partition_accounts, resolve_client_name, resolve_client_last, safe_filename
+from classify import partition_accounts, resolve_client_name, resolve_client_last, safe_filename, dedup_accounts
 from strategize import build_context, needs_tradelines
 from renderer import render
 from tradelines import fetch_tradelines, find_best_combo
@@ -48,9 +48,14 @@ def run(file_path, *, disputes=False, mail=False, live=False,
     times["parse"] = time.time() - t
     print(f"Parsed: {len(data.get('raw_accounts', []))} accounts in {times['parse']*1000:.0f}ms", file=sys.stderr)
 
-    # Stage 2: Classify — single pass
+    # Stage 2: Classify — dedup cross-bureau splits, then single-pass partition
     t = time.time()
-    derog, clean = partition_accounts(data.get("raw_accounts", []))
+    raw = data.get("raw_accounts", [])
+    deduped = dedup_accounts(raw)
+    if len(deduped) != len(raw):
+        print(f"Dedup: {len(raw)} -> {len(deduped)} accounts", file=sys.stderr)
+    data["raw_accounts"] = deduped
+    derog, clean = partition_accounts(deduped)
     times["classify"] = time.time() - t
 
     # Stage 3: Tradelines (await pre-fetch)

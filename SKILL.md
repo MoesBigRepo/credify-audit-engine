@@ -71,7 +71,7 @@ See `client_template.json` for the required format. Key fields:
 | TransUnion.com | PDF | 1 | Working |
 | MyFICO | PDF/HTML | 1-3 | Stub |
 | SmartCredit | PDF/HTML | 3 | Stub |
-| MyFreeScoreNow | PDF/HTML | 3 | Stub |
+| MyFreeScoreNow | PDF | 3 | Working |
 | AnnualCreditReport | PDF | 1 | Stub |
 
 ## Architecture
