@@ -470,12 +470,75 @@ with ThreadPoolExecutor(max_workers=1) as executor:
                 if "text message" in o.inner_text().strip().lower():
                     s.select_option(value=o.get_attribute("value")); break
         page.wait_for_timeout(100)
-        gcb = page.query_selector("button:has-text('Get My Code'):visible")
-        if gcb: gcb.click()
-        page.wait_for_timeout(1500)
+
+        def click_get_my_code():
+            gcb = page.query_selector("button:has-text('Get My Code'):visible")
+            if gcb: gcb.click()
+            page.wait_for_timeout(1500)
+
+        def detect_send_failure():
+            """Look for 'We could not send a code to your phone' error on the page.
+            Signals a phone-side problem (bad TV number), not a VPN issue."""
+            try:
+                err_selectors = [
+                    "text=/could not send.*code.*phone/i",
+                    "text=/unable to send.*code/i",
+                    "text=/invalid.*phone number/i",
+                ]
+                for sel in err_selectors:
+                    el = page.query_selector(sel)
+                    if el and el.is_visible():
+                        return el.inner_text().strip()[:120]
+            except: pass
+            return None
+
+        def swap_phone_number(old_vid, old_token):
+            """Cancel current TV reservation, rent a new number, refill the form.
+            Returns (new_vid, new_token, new_digits) or None on failure.
+            Free — TV only charges when SMS is received."""
+            log("[PHONE] Cancelling current number, getting new one...")
+            try: requests.post(f"{TV_BASE}/api/pub/v2/verifications/{old_vid}/cancel", headers={"Authorization": f"Bearer {old_token}"}, timeout=5)
+            except: pass
+
+            try:
+                r = requests.post(f"{TV_BASE}/api/pub/v2/auth", headers={"X-API-KEY": API_KEY, "X-API-USERNAME": USERNAME}, timeout=15)
+                new_token = r.json()["token"]
+                h = {"Authorization": f"Bearer {new_token}", "Content-Type": "application/json"}
+                r = requests.post(f"{TV_BASE}/api/pub/v2/verifications", json={"serviceName": "identitytheftgov", "capability": "sms"}, headers=h, timeout=15)
+                new_vid = r.headers.get("Location", "").split("/")[-1]
+                r2 = requests.get(f"{TV_BASE}/api/pub/v2/verifications/{new_vid}", headers=h, timeout=15)
+                number = r2.json()["number"]
+                digits = number.lstrip("+")
+                if digits.startswith("1") and len(digits) == 11: digits = digits[1:]
+                log(f"[PHONE] New number: {digits}")
+            except Exception as _e:
+                log(f"[PHONE] Failed to rent new number: {_e}")
+                return None
+
+            # Refill the primary phone field
+            try:
+                phone_sel = "input[id*='phone']:visible, input[name*='phone']:visible, input[formcontrolname*='phone']:visible"
+                phone_input = page.query_selector(phone_sel)
+                if phone_input:
+                    phone_input.fill("")
+                    page.wait_for_timeout(100)
+                    phone_input.fill(digits)
+                    log("[PHONE] Form refilled with new number")
+            except Exception as _e:
+                log(f"[PHONE] Failed to refill form: {_e}")
+                return None
+
+            # Click Get My Code again
+            click_get_my_code()
+            return new_vid, new_token, digits
+
+        click_get_my_code()
         log("Get My Code clicked — polling SMS")
 
-        # Poll SMS
+        MAX_NUMBER_SWAPS = 3
+        number_swaps = 0
+
+        # Poll SMS — with early-exit on detected send failure
         code = None
         poll_start = time.time()
         while time.time() - poll_start < 45:
@@ -483,10 +546,40 @@ with ThreadPoolExecutor(max_workers=1) as executor:
             data = r.json().get("data", [])
             if data and data[0].get("parsedCode"):
                 code = data[0]["parsedCode"]; break
+
+            # Early-exit: FTC displayed "could not send code" — swap number immediately
+            err = detect_send_failure()
+            if err and number_swaps < MAX_NUMBER_SWAPS:
+                log(f"[PHONE] FTC reported: {err}")
+                swap = swap_phone_number(vid, token)
+                if swap:
+                    vid, token, _ = swap
+                    number_swaps += 1
+                    poll_start = time.time()  # reset poll window for new number
+                    continue
+                else:
+                    break
+
             time.sleep(0.5)
 
+        # If still no code after 45s with no explicit failure, try one more number swap
+        # (handles silent SMS blocks) before falling back to VPN rotation
+        if not code and number_swaps < MAX_NUMBER_SWAPS:
+            log("[PHONE] SMS timed out silently — trying new number first (free)")
+            swap = swap_phone_number(vid, token)
+            if swap:
+                vid, token, _ = swap
+                number_swaps += 1
+                poll_start = time.time()
+                while time.time() - poll_start < 45:
+                    r = requests.get(f"{TV_BASE}/api/pub/v2/sms", params={"reservationId": vid}, headers={"Authorization": f"Bearer {token}"}, timeout=10)
+                    data = r.json().get("data", [])
+                    if data and data[0].get("parsedCode"):
+                        code = data[0]["parsedCode"]; break
+                    time.sleep(0.5)
+
         if not code:
-            log("SMS TIMEOUT — rotating VPN")
+            log("SMS TIMEOUT after number swaps — rotating VPN")
             try: requests.post(f"{TV_BASE}/api/pub/v2/verifications/{vid}/cancel", headers={"Authorization": f"Bearer {token}"}, timeout=5)
             except: pass
             browser.close()
