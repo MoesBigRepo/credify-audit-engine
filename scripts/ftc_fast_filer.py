@@ -1017,6 +1017,16 @@ with ThreadPoolExecutor(max_workers=1) as executor:
                         _file_verified = True
                         _plog(f"Renamed extensionless to .pdf: {_staging_path.stat().st_size} bytes")
 
+                # Fallback 2: AppleScript filename rename didn't apply — pick up any recent .pdf in staging
+                if not _file_verified:
+                    _candidates = sorted(_staging_dir.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+                    _recent = [p for p in _candidates if (time.time() - p.stat().st_mtime) < 60 and p.stat().st_size > 1000]
+                    if _recent:
+                        _found = _recent[0]
+                        _found.rename(_staging_path)
+                        _file_verified = True
+                        _plog(f"Recovered PDF with different name: {_found.name} -> {_staging_path.name} ({_staging_path.stat().st_size} bytes)")
+
                 if not _file_verified:
                     _plog(f"FAIL file not found after 10s poll")
                     _plog(f"  stdout: {_bridge_stdout!r}")

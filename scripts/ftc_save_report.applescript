@@ -21,40 +21,46 @@ on run argv
 			end repeat
 
 			-- Step 1: Print dialog is the current sheet. Press Enter to Save.
-			-- Poll for sheet to exist before pressing Enter.
-			repeat 30 times
+			-- Poll for print preview sheet (up to 3s — preview can be slow to render)
+			repeat 60 times
 				if (count of sheets of window 1) > 0 then exit repeat
 				delay 0.05
 			end repeat
 			keystroke return
 
-			-- Step 2: Wait for the OS file save dialog to appear.
-			-- The sheet changes content; poll until Cmd+A becomes effective (filename field focused).
-			-- We detect by waiting for a new sheet or the same sheet with different UI.
-			delay 0.3
+			-- Step 2: Wait for OS file save dialog to receive focus.
+			-- The save dialog is a sheet on window 1. We need it focused before Cmd+A.
+			-- Poll for ~2s — the dialog transition isn't instant.
+			delay 1.5
+			repeat 20 times
+				try
+					if (count of sheets of window 1) > 0 then exit repeat
+				end try
+				delay 0.1
+			end repeat
 
 			-- Select filename, paste with extension
+			-- Small delays needed for clipboard/focus to settle between keystrokes
 			keystroke "a" using command down
-			delay 0.08
+			delay 0.2
 			set the clipboard to reportName & ".pdf"
-			delay 0.08
+			delay 0.15
 			keystroke "v" using command down
-			delay 0.12
+			delay 0.3
 
 			-- Step 3: Cmd+Shift+G opens "Go to folder" sheet
 			keystroke "g" using {command down, shift down}
-			-- Poll for the Go-to-folder sheet to appear (it's a sheet on top of the save dialog)
-			delay 0.25
+			delay 0.6
 
 			-- Paste the save directory path
 			set the clipboard to saveDir
-			delay 0.08
+			delay 0.15
 			keystroke "v" using command down
-			delay 0.12
+			delay 0.3
 
-			-- Enter navigates to folder — poll for sheet to dismiss, then small settle
+			-- Enter navigates to folder
 			keystroke return
-			delay 0.4
+			delay 0.8
 
 			-- Step 4: Enter clicks Save
 			keystroke return
