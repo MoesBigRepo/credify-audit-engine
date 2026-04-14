@@ -16,6 +16,24 @@ from concurrent.futures import ThreadPoolExecutor
 from playwright.sync_api import sync_playwright
 from pathlib import Path
 
+CHROMIUM_PROFILE = Path.home() / ".credify_chromium_profile"
+
+
+def _pin_save_as_pdf():
+    """Pre-seed Chromium Preferences so print preview opens on 'Save as PDF'
+    regardless of the system default printer. AppleScript's Enter then hits
+    Save instead of Print on a CUPS printer."""
+    d = CHROMIUM_PROFILE / "Default"
+    d.mkdir(parents=True, exist_ok=True)
+    app_state = json.dumps({
+        "version": 2,
+        "recentDestinations": [{"id": "Save as PDF", "origin": "local", "account": ""}],
+    })
+    (d / "Preferences").write_text(json.dumps({
+        "printing": {"print_preview_sticky_settings": {"appState": app_state}}
+    }))
+
+
 TV_BASE = "https://www.textverified.com"
 API_KEY = os.environ.get("TEXTVERIFIED_API_KEY")
 USERNAME = os.environ.get("TEXTVERIFIED_USERNAME")
@@ -204,9 +222,15 @@ with ThreadPoolExecutor(max_workers=1) as executor:
     with sync_playwright() as p:
         # headless=True for form filling — prevents macOS window-minimize stalling Angular rendering.
         # Browser is brought visible at the download page via a new CDP session.
-        browser = p.chromium.launch(headless=False, slow_mo=0)
-        ctx = browser.new_context(viewport={"width": 1280, "height": 900}, accept_downloads=True)
-        page = ctx.new_page()
+        # Persistent profile pins "Save as PDF" as the print destination (prevents
+        # AppleScript from accidentally sending report to a CUPS printer).
+        _pin_save_as_pdf()
+        ctx = p.chromium.launch_persistent_context(
+            str(CHROMIUM_PROFILE), headless=False, slow_mo=0,
+            viewport={"width": 1280, "height": 900}, accept_downloads=True,
+        )
+        browser = ctx.browser
+        page = ctx.pages[0] if ctx.pages else ctx.new_page()
 
         # Hide Chromium from dock/taskbar but do NOT minimize (minimizing stalls Angular rendering on macOS)
         try: subprocess.Popen(["osascript", "-e", 'tell application "System Events" to set visible of process "Google Chrome for Testing" to false'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
