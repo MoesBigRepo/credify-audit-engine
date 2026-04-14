@@ -541,7 +541,7 @@ with ThreadPoolExecutor(max_workers=1) as executor:
         # Poll SMS — with early-exit on detected send failure
         code = None
         poll_start = time.time()
-        while time.time() - poll_start < 45:
+        while time.time() - poll_start < 10:
             r = requests.get(f"{TV_BASE}/api/pub/v2/sms", params={"reservationId": vid}, headers={"Authorization": f"Bearer {token}"}, timeout=10)
             data = r.json().get("data", [])
             if data and data[0].get("parsedCode"):
@@ -571,7 +571,7 @@ with ThreadPoolExecutor(max_workers=1) as executor:
                 vid, token, _ = swap
                 number_swaps += 1
                 poll_start = time.time()
-                while time.time() - poll_start < 45:
+                while time.time() - poll_start < 10:
                     r = requests.get(f"{TV_BASE}/api/pub/v2/sms", params={"reservationId": vid}, headers={"Authorization": f"Bearer {token}"}, timeout=10)
                     data = r.json().get("data", [])
                     if data and data[0].get("parsedCode"):
