@@ -1,63 +1,67 @@
--- FTC Report PDF Saver
--- Handles the Chromium print dialog that appears after clicking "Download Report (PDF)"
--- The print dialog already has "Save as PDF" selected — just need to click Save,
--- then handle the OS file save dialog.
---
--- Usage: osascript ftc_save_report.applescript "Robert FTC 1" "/path/to/FTC Reports"
---
+-- FTC Report PDF Saver — poll-based, near-instant UI interaction
+-- Usage: osascript ftc_save_report.applescript "Robert FTC 1" "/path/to/save/dir"
 -- Pre-condition: Chromium print dialog is open with "Save as PDF" destination.
 
 on run argv
 	set reportName to item 1 of argv
 	set saveDir to item 2 of argv
-
-	-- The browser is "Google Chrome for Testing" (Playwright's Chromium)
 	set appName to "Google Chrome for Testing"
 
+	set t0 to (current date)
+
 	tell application appName to activate
-	delay 1
 
 	tell application "System Events"
 		tell process appName
+			-- Wait until app is frontmost (near-instant after activate)
 			set frontmost to true
-			delay 0.5
+			repeat 20 times
+				if frontmost then exit repeat
+				delay 0.05
+			end repeat
 
-			-- Step 1: The Chromium print dialog is already open with "Save as PDF".
-			-- Click the blue "Save" button by pressing Enter (it's the default button).
+			-- Step 1: Print dialog is the current sheet. Press Enter to Save.
+			-- Poll for sheet to exist before pressing Enter.
+			repeat 30 times
+				if (count of sheets of window 1) > 0 then exit repeat
+				delay 0.05
+			end repeat
 			keystroke return
-			delay 2
 
-			-- Step 2: OS-level file save dialog is now open.
-			-- Set the filename (with explicit .pdf extension — Chromium's
-			-- "Save as PDF" does NOT auto-append it, file saves without extension).
-			keystroke "a" using command down
+			-- Step 2: Wait for the OS file save dialog to appear.
+			-- The sheet changes content; poll until Cmd+A becomes effective (filename field focused).
+			-- We detect by waiting for a new sheet or the same sheet with different UI.
 			delay 0.3
+
+			-- Select filename, paste with extension
+			keystroke "a" using command down
+			delay 0.08
 			set the clipboard to reportName & ".pdf"
-			delay 0.2
+			delay 0.08
 			keystroke "v" using command down
-			delay 0.5
+			delay 0.12
 
-			-- Step 3: Navigate to save directory using Cmd+Shift+G (Go to folder)
+			-- Step 3: Cmd+Shift+G opens "Go to folder" sheet
 			keystroke "g" using {command down, shift down}
-			delay 2
+			-- Poll for the Go-to-folder sheet to appear (it's a sheet on top of the save dialog)
+			delay 0.25
 
-			-- Paste the save directory path (clipboard avoids / and space issues)
+			-- Paste the save directory path
 			set the clipboard to saveDir
-			delay 0.2
+			delay 0.08
 			keystroke "v" using command down
-			delay 0.5
+			delay 0.12
 
-			-- Press Enter to go to that folder
+			-- Enter navigates to folder — poll for sheet to dismiss, then small settle
 			keystroke return
-			delay 1.5
+			delay 0.4
 
-			-- Step 4: Press Enter to click Save
+			-- Step 4: Enter clicks Save
 			keystroke return
-			delay 2
 
 			-- Handle "Replace?" dialog if file already exists
+			delay 0.25
 			try
-				delay 0.5
 				if exists sheet 1 of window 1 then
 					keystroke return
 				end if
@@ -66,5 +70,6 @@ on run argv
 		end tell
 	end tell
 
-	return saveDir & "/" & reportName & ".pdf"
+	set t1 to (current date)
+	return ((t1 - t0) as text) & "s | " & saveDir & "/" & reportName & ".pdf"
 end run

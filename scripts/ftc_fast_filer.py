@@ -596,35 +596,57 @@ with ThreadPoolExecutor(max_workers=1) as executor:
                 sys.exit(1)
 
         log(f"CODE: {code}")
-        code_filled = False
-        for s_sel in ["input[name*='code']", "input[id*='code']", "input[placeholder*='code']",
-                  "input[formcontrolname*='code']", "input[formcontrolname*='Code']",
-                  "input[aria-label*='code']", "input[inputmode='numeric']"]:
-            ci = page.query_selector(s_sel)
-            if ci and ci.is_visible():
-                ci.fill(code); code_filled = True; log(f"Code entered in: {s_sel}"); break
-        if not code_filled:
-            for inp in page.query_selector_all("input:visible"):
-                ml = inp.get_attribute("maxlength") or ""
-                if ml and int(ml) <= 10 and not inp.get_attribute("value"):
-                    inp.fill(code); code_filled = True; log("Code entered in short input"); break
+        # Single JS pass: locate code input, fill it with Angular-safe events, click Verify.
+        # This is near-instant (~50ms) vs the old sequential Playwright locator cascade.
+        _verify_result = page.evaluate("""(code) => {
+            // Find code input: prefer name/id/placeholder containing 'code', then any numeric 4-10 char input
+            const codeSelectors = [
+                "input[name*='code' i]", "input[id*='code' i]", "input[placeholder*='code' i]",
+                "input[formcontrolname*='code' i]", "input[aria-label*='code' i]",
+                "input[inputmode='numeric']"
+            ];
+            let input = null;
+            for (const sel of codeSelectors) {
+                const el = document.querySelector(sel);
+                if (el && el.offsetParent !== null) { input = el; break; }
+            }
+            if (!input) {
+                for (const el of document.querySelectorAll("input")) {
+                    const ml = parseInt(el.getAttribute("maxlength") || "0", 10);
+                    if (ml && ml <= 10 && el.offsetParent !== null && !el.value) { input = el; break; }
+                }
+            }
+            if (!input) return { filled: false, verified: false, reason: "no code input found" };
 
-        # Verify click
-        verify_ok = False
-        try: page.get_by_role("button", name="Verify").click(timeout=3000); verify_ok = True
-        except:
-            try: page.locator("button:has-text('Verify')").first.click(force=True, timeout=2000); verify_ok = True
-            except:
-                verify_ok = page.evaluate("""() => {
-                    const els = document.querySelectorAll('button, a, span, div, input');
-                    for (const el of els) {
-                        if (el.textContent.trim() === 'Verify' && el.offsetParent !== null) {
-                            el.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
-                            return true;
-                        }
+            // Fill with Angular-safe event sequence
+            const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+            setter.call(input, code);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.dispatchEvent(new Event('blur', { bubbles: true }));
+
+            // Click Verify button in same tick
+            let verifyClicked = false;
+            const btnSelectors = ["button", "a", "input[type=button]", "input[type=submit]"];
+            for (const sel of btnSelectors) {
+                for (const el of document.querySelectorAll(sel)) {
+                    const txt = (el.textContent || el.value || "").trim();
+                    if (txt === "Verify" && el.offsetParent !== null) {
+                        el.click();
+                        verifyClicked = true;
+                        break;
                     }
-                    return false;
-                }""")
+                }
+                if (verifyClicked) break;
+            }
+            return { filled: true, verified: verifyClicked, input: input.id || input.name || "?" };
+        }""", code)
+
+        if _verify_result.get("filled"):
+            log(f"Code entered: {_verify_result.get('input')}")
+        else:
+            log(f"Code entry FAILED: {_verify_result.get('reason', 'unknown')}")
+        verify_ok = _verify_result.get("verified", False)
 
         try: page.wait_for_function("() => !document.body.innerText.includes('Sending code')", timeout=10000)
         except: page.wait_for_timeout(1000)
@@ -931,8 +953,13 @@ with ThreadPoolExecutor(max_workers=1) as executor:
         if not _download_triggered:
             log("[SAVE] FAIL — could not trigger download. Skipping save.")
         else:
-            # Wait for Chromium print dialog to render (6s — preview needs time)
-            page.wait_for_timeout(6000)
+            # POST-DOWNLOAD TIMELINE — detailed logs per user request
+            _post_dl_t0 = time.time()
+            def _plog(msg): log(f"[POST-DL +{(time.time() - _post_dl_t0)*1000:.0f}ms] {msg}")
+
+            # Short wait for print preview sheet to render (reduced from 6s to 1s)
+            page.wait_for_timeout(1000)
+            _plog("Print preview sheet should be rendered (1000ms wait)")
 
             # ================================================================
             # LAYER 2b — Native save bridge (AppleScript handles OS dialog)
@@ -941,45 +968,46 @@ with ThreadPoolExecutor(max_workers=1) as executor:
             _bridge_success = False
             _bridge_stdout = ""
             _bridge_stderr = ""
-            log("[SAVE] Invoking AppleScript native save bridge...")
+            _plog(f"Invoking AppleScript: osascript {_script.name} '{_report_name}' '{_staging_dir}'")
+            _as_t0 = time.time()
             try:
                 _result = subprocess.run(
                     ["osascript", str(_script), _report_name, str(_staging_dir)],
-                    capture_output=True, text=True, timeout=60
+                    capture_output=True, text=True, timeout=30
                 )
+                _as_elapsed = (time.time() - _as_t0) * 1000
                 _bridge_stdout = _result.stdout.strip()
                 _bridge_stderr = _result.stderr.strip()
                 _bridge_success = _result.returncode == 0
-                log(f"[SAVE] AppleScript returned (rc={_result.returncode})")
+                _plog(f"AppleScript returned (rc={_result.returncode}, elapsed={_as_elapsed:.0f}ms, stdout={_bridge_stdout!r})")
             except subprocess.TimeoutExpired:
-                log("[SAVE] FAIL Layer 2b — AppleScript timed out (60s)")
+                _plog("FAIL AppleScript timed out (30s)")
                 _bridge_stderr = "timeout"
             except Exception as _e:
-                log(f"[SAVE] FAIL Layer 2b — AppleScript error: {_e}")
+                _plog(f"FAIL AppleScript error: {_e}")
                 _bridge_stderr = str(_e)
 
             # ================================================================
-            # LAYER 3a — File verification + stabilization
+            # LAYER 3a — File verification (tight polling, 100ms)
             # ================================================================
             if _bridge_success or _bridge_stderr == "":
-                for _poll in range(15):
-                    time.sleep(1)
-                    if _staging_path.exists() and _staging_path.stat().st_size > 0:
-                        _size1 = _staging_path.stat().st_size
-                        time.sleep(1)
-                        if _staging_path.exists():
-                            _size2 = _staging_path.stat().st_size
-                            if _size2 == _size1 and _size2 > 1000:
-                                _file_verified = True
-                                log(f"[SAVE] File verified in staging: {_size2} bytes, stable")
-                                break
-                            else:
-                                log(f"[SAVE] File still writing: {_size1} -> {_size2}")
+                _plog("Polling staging dir for file (100ms interval, 10s max)")
+                _vrf_t0 = time.time()
+                _last_size = 0
+                for _poll in range(100):  # 100 × 100ms = 10s
+                    if _staging_path.exists():
+                        _cur = _staging_path.stat().st_size
+                        if _cur > 1000 and _cur == _last_size:
+                            _file_verified = True
+                            _plog(f"File verified: {_cur} bytes, stable after {(time.time()-_vrf_t0)*1000:.0f}ms")
+                            break
+                        _last_size = _cur
+                    time.sleep(0.1)
 
                 if not _file_verified:
                     if os.path.exists(_final_path) and os.path.getsize(_final_path) > 1000:
                         _file_verified = True
-                        log(f"[SAVE] File found directly in final dir: {os.path.getsize(_final_path)} bytes")
+                        _plog(f"File found directly in final dir: {os.path.getsize(_final_path)} bytes")
 
                 # Fallback: Chromium may have saved without .pdf extension
                 if not _file_verified:
@@ -987,33 +1015,34 @@ with ThreadPoolExecutor(max_workers=1) as executor:
                     if _extensionless.exists() and _extensionless.stat().st_size > 1000:
                         _extensionless.rename(_staging_path)
                         _file_verified = True
-                        log(f"[SAVE] Found extensionless file, renamed to .pdf: {_staging_path.stat().st_size} bytes")
+                        _plog(f"Renamed extensionless to .pdf: {_staging_path.stat().st_size} bytes")
 
                 if not _file_verified:
-                    log("[SAVE] FAIL Layer 3a — file not found or unstable after 15s")
-                    log(f"[SAVE]   AppleScript stdout: {_bridge_stdout}")
-                    log(f"[SAVE]   AppleScript stderr: {_bridge_stderr[:200]}")
+                    _plog(f"FAIL file not found after 10s poll")
+                    _plog(f"  stdout: {_bridge_stdout!r}")
+                    _plog(f"  stderr: {_bridge_stderr[:200]!r}")
 
             # ================================================================
             # LAYER 3b — Route file from staging to final destination
             # ================================================================
             if _file_verified and _staging_path.exists():
+                _mv_t0 = time.time()
                 try:
                     import shutil as _shutil
                     _shutil.move(str(_staging_path), _final_path)
                     _routed = True
-                    log(f"[SAVE] Routed to final: {_final_path}")
+                    _plog(f"shutil.move staging->final complete in {(time.time()-_mv_t0)*1000:.0f}ms")
                 except Exception as _e:
-                    log(f"[SAVE] FAIL Layer 3b — move failed: {_e}")
-                    log(f"[SAVE] File preserved in staging: {_staging_path}")
+                    _plog(f"FAIL move: {_e} — file preserved in staging: {_staging_path}")
             elif _file_verified and os.path.exists(_final_path):
                 _routed = True
-                log(f"[SAVE] Already in final dir (no move needed)")
+                _plog("Already in final dir (no move needed)")
 
             # ================================================================
             # LAYER 4 — Final status
             # ================================================================
             if _routed:
+                _plog(f"SAVE SUCCESS — total post-download: {(time.time()-_post_dl_t0)*1000:.0f}ms")
                 log(f"[SAVE] SUCCESS — {_final_path}")
             elif _file_verified:
                 log(f"[SAVE] PARTIAL — file verified but routing failed. Check staging: {_staging_path}")
@@ -1025,16 +1054,21 @@ with ThreadPoolExecutor(max_workers=1) as executor:
         # ====================================================================
         # Cleanup: delete audit JSON if it was a temp file, close browser
         # ====================================================================
+        _cleanup_t0 = time.time()
         _audit_path = os.path.expanduser(args.audit_json)
         if os.path.exists(_audit_path) and "/tmp/" in _audit_path:
             os.unlink(_audit_path)
-            log(f"Cleaned up temp audit: {_audit_path}")
+            log(f"[CLEANUP +{(time.time()-_cleanup_t0)*1000:.0f}ms] Deleted temp audit: {_audit_path}")
 
-        log("Closing browser")
+        _bc_t0 = time.time()
+        log(f"[CLEANUP] Closing browser...")
         try:
             browser.close()
-        except Exception:
-            pass
+            log(f"[CLEANUP +{(time.time()-_bc_t0)*1000:.0f}ms] Browser closed")
+        except Exception as _e:
+            log(f"[CLEANUP] Browser close error: {_e}")
+
+        log(f"[CLEANUP] Total cleanup: {(time.time()-_cleanup_t0)*1000:.0f}ms")
         log("Done.")
 
 # Cleanup
